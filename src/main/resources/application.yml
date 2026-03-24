@@ -1,0 +1,39 @@
+server:
+   port: 8080
+   tomcat:
+      threads:
+         max: 400
+         min-spare: 50
+
+spring:
+   application:
+      name: reservation
+
+   datasource:
+      url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/reservation_db
+      username: ${DATABASE_USER:postgres}
+      password: ${DATABASE_PASS:postgres}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+         maximum-pool-size: 50
+         minimum-idle: 10
+         connection-timeout: 2000
+
+   jpa:
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+         ddl-auto: update
+      show-sql: true
+      open-in-view: false
+      properties:
+         hibernate:
+            format_sql: true
+
+springdoc:
+   swagger-ui:
+      path: /swagger-ui.html
+
+logging:
+   level:
+      root: INFO
+      com.alja.reservation: DEBUG
