@@ -24,7 +24,6 @@ public class AvailabilityController {
 
     public static final String AVAILABILITY_API_V1 = "/api/v1/availability";
 
-
     private final AvailabilityService availabilityService;
     private final AvailabilityMapper availabilityMapper;
 

@@ -57,9 +57,9 @@ public class BookingEntity {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (status == null) {
-            status = BookingStatus.CONFIRMED;
+        this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = BookingStatus.CONFIRMED;
         }
     }
 

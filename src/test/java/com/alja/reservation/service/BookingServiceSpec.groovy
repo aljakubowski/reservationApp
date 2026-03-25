@@ -160,7 +160,7 @@ class BookingServiceSpec extends Specification {
 
         then: "An exception is thrown from the private lockRoomEntity method"
         def ex = thrown(IllegalArgumentException)
-        ex.message == "Room does not exist"
+        ex.message == "Room is not available."
     }
 
     def "Should throw RoomUnavailableException when room has overlapping bookings"() {

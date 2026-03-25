@@ -33,11 +33,10 @@ public class BookingService {
             return new IdempotentCreationResult<>(existingBooking.get(), false);
         }
 
-        log.debug("Locking room {} to prevent concurrent bookings", booking.getRoomId());
         lockRoomEntity(booking);
         validateRoomAvailability(booking);
         booking.setIdempotencyKey(idempotencyKey);
-        return saveBooking(booking, idempotencyKey);
+        return saveBooking(booking);
     }
 
     @Transactional(readOnly = true)
@@ -45,10 +44,10 @@ public class BookingService {
         return bookingRepository.findAllByUserId(userId, pageable);
     }
 
-
     @Transactional(readOnly = true)
     public BookingEntity getByIdAndUserId(Long bookingId, String userId) {
-        return findBookingByIdAndUser(bookingId, userId);
+        return bookingRepository.findByBookingIdAndUserId(bookingId, userId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found or access denied."));
     }
 
     @Transactional
@@ -64,8 +63,9 @@ public class BookingService {
     }
 
     private void lockRoomEntity(BookingEntity booking) {
+        log.debug("Locking room {} to prevent concurrent bookings", booking.getRoomId());
         roomRepository.findAndLockById(booking.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("Room does not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("Room is not available."));
     }
 
     private void validateRoomAvailability(BookingEntity booking) {
@@ -82,22 +82,16 @@ public class BookingService {
                 booking.getRoomId(), booking.getCheckIn(), booking.getCheckOut());
     }
 
-    private IdempotentCreationResult<BookingEntity> saveBooking(BookingEntity booking, String idempotencyKey) {
+    private IdempotentCreationResult<BookingEntity> saveBooking(BookingEntity booking) {
         try {
             BookingEntity saved = bookingRepository.saveAndFlush(booking);
             return new IdempotentCreationResult<>(saved, true);
         } catch (DataIntegrityViolationException e) {
-            BookingEntity parallelSaved = bookingRepository.findByIdempotencyKey(idempotencyKey)
+            BookingEntity parallelSaved = bookingRepository.findByIdempotencyKey(booking.getIdempotencyKey())
                     .orElseThrow(() -> e);
             return new IdempotentCreationResult<>(parallelSaved, false);
         }
     }
-
-    private BookingEntity findBookingByIdAndUser(Long bookingId, String userId) {
-        return bookingRepository.findByBookingIdAndUserId(bookingId, userId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found or access denied."));
-    }
-
 
     private boolean isBookingCancelled(BookingEntity booking) {
         return booking.getStatus() == BookingStatus.CANCELLED;
